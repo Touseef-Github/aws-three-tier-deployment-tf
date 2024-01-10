@@ -23,7 +23,7 @@ resource "aws_security_group" "SSHSecurityGroup" {
 }
 
 resource "aws_instance" "EC2Instance" {
-  ami           = "ami-079db87dc4c10ac91"
+  ami           = var.AMI
   instance_type = "t2.micro"
   key_name      = var.KeyPair
   subnet_id     = aws_subnet.PublicSubnet1.id
@@ -75,7 +75,7 @@ resource "aws_security_group" "SSHSecurityGroup2" {
 }
 
 resource "aws_instance" "EC2Instance2" {
-  ami           = "ami-079db87dc4c10ac91"
+  ami           = var.AMI
   instance_type = "t2.micro"
   key_name      = var.KeyPair
   subnet_id     = aws_subnet.PrivateSubnet1.id
