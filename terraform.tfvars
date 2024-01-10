@@ -11,6 +11,7 @@ PublicSubnet1CIDR           =  "10.231.10.0/24"
 PublicSubnet2CIDR           =  "10.231.11.0/24"
 EnvironmentName             =  "touseef-test-network"
 environment                 =  "test-Touseef"
+AMI                         =  "ami-079db87dc4c10ac91"
 # CustomerDetails             =  "test-Customer"
 
 # ASG variables
