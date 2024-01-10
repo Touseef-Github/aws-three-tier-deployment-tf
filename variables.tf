@@ -58,6 +58,12 @@ variable "KeyPair" {
   default     = "three-tier"
 }
 
+variable "AMI" {
+  description = "AMI_ID of the required VM machine"
+  type        = string
+  default     = "ami-079db87dc4c10ac91"
+}
+
 # variable "RDSSnapshotName" {
 #   description = "Name of the RDS snapshot to restore from"
 #   type        = string
