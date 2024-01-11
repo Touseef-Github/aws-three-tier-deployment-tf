@@ -82,6 +82,10 @@ output "alb_dns_name_app" {
 #   value       = aws_security_group.NoIngressSecurityGroup.id
 # }
 
-output "webtool_bucket_arn" {
-  value = aws_s3_bucket.Storage-Bucket.arn
+output "S3_bucket_arn1" {
+  value = aws_s3_bucket.storage_bucket.arn
+}
+
+output "S3_bucket_arn2" {
+  value = aws_s3_bucket.storage_bucket2.arn
 }

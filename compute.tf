@@ -17,6 +17,13 @@ resource "aws_security_group" "SSHSecurityGroup" {
     security_groups = [aws_security_group.load_balancer_sg.id]
   }
 
+  egress {
+    from_port        = 0
+    to_port          = 0
+    protocol         = "-1"
+    cidr_blocks      = ["0.0.0.0/0"]
+  }
+
   tags = {
     Name = "${var.EnvironmentName}-public-ec2"
   }
@@ -27,6 +34,7 @@ resource "aws_instance" "EC2Instance" {
   instance_type = "t2.micro"
   key_name      = var.KeyPair
   subnet_id     = aws_subnet.PublicSubnet1.id
+  user_data = file("${path.module}/user_data.sh")
 
   security_groups = [aws_security_group.SSHSecurityGroup.id]
 
@@ -67,6 +75,13 @@ resource "aws_security_group" "SSHSecurityGroup2" {
     to_port     = 0
     protocol    = "-1"
     security_groups = [aws_security_group.load_balancer_sg2.id]
+  }
+
+  egress {
+    from_port        = 0
+    to_port          = 0
+    protocol         = "-1"
+    cidr_blocks      = ["0.0.0.0/0"]
   }
 
   tags = {

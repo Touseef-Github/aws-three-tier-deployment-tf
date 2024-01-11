@@ -72,6 +72,11 @@ resource "aws_lb_listener" "redirect" {
   }
 }
 
+resource "aws_lb_target_group_attachment" "web-tg-attachment" {
+  target_group_arn = aws_lb_target_group.web-tg.arn
+  target_id        = aws_instance.EC2Instance.id  # Replace with your EC2 instance resource name
+}
+
 #########Private Load balancer ################
 
 resource "aws_security_group" "load_balancer_sg2" {

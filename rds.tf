@@ -30,6 +30,12 @@ resource "aws_security_group" "RDSInstanceSecurityGroup" {
     protocol    = "tcp"
     cidr_blocks = ["10.231.0.0/16"]
   }
+  egress {
+    from_port        = 0
+    to_port          = 0
+    protocol         = "-1"
+    cidr_blocks      = ["0.0.0.0/0"]
+  }
   tags = {
     Name = "DB-SEC-Grp"
   }

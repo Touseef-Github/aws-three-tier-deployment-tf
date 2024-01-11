@@ -1,50 +1,42 @@
-resource "aws_s3_bucket" "Storage-Bucket" {
-  bucket = "Infra-sotrage-testing123"
-  acl    = "private"
-  server_side_encryption_configuration {
-    rule {
-      apply_server_side_encryption_by_default {
-        sse_algorithm = "AES256"
-      }
-    }
+resource "aws_s3_bucket" "storage_bucket" {
+  bucket = "touseef-test-storage-bucket-1234"  # Set a globally unique bucket name
+  acl    = "private"  # Access control for the bucket. Options: private, public-read, public-read-write, authenticated-read, log-delivery-write, bucket-owner-read, bucket-owner-full-control
+  force_destroy = true  # Set to true to allow Terraform to destroy the bucket even if it contains objects
+  tags = {
+    Name        = "storage_bucket"
+    Environment = "Dev"
   }
 }
 
-resource "aws_s3_bucket" "Storage-Bucket2" {
-  bucket = "Infra-sotrage-testing12345"
-  acl    = "private"
-  server_side_encryption_configuration {
-    rule {
-      apply_server_side_encryption_by_default {
-        sse_algorithm = "AES256"
-      }
-    }
+# ###########Second S3 bucket #######
+
+resource "aws_s3_bucket" "storage_bucket2" {
+  bucket = "touseef-test-storage-bucket-12345"  # Set a globally unique bucket name
+  acl    = "private"  # Access control for the bucket. Options: private, public-read, public-read-write, authenticated-read, log-delivery-write, bucket-owner-read, bucket-owner-full-control
+  force_destroy = true  # Set to true to allow Terraform to destroy the bucket even if it contains objects
+  tags = {
+    Name        = "storage_bucket2"
+    Environment = "prod"
   }
 }
 
-# SNS Topics
+##### SNS Topics#########
 resource "aws_sns_topic" "code_deployment_approval_request" {
   name        = "CodeDeploymentInfinity-SendApprovalRequest"
   display_name = "CodeDeploymentInfinity-SendApprovalRequest"
 }
 
-# SQS Queue
-resource "aws_sqs_queue" "infinity_courier_dlq" {
-  name                      = "Infinity-CourierDeliveredNotificationSQS-DLQ-${var.environment}"
+# # SQS Queue
+resource "aws_sqs_queue" "Test-sqs1" {
+  name                      = "Test-sqs1-${var.environment}"
   delay_seconds             = 0
   max_message_size          = 262144
   message_retention_seconds = 345600
   visibility_timeout_seconds = 31
-  receive_wait_time_seconds = 0
-
-  redrive_policy = jsonencode({
-    deadLetterTargetArn    = aws_sns_topic.code_deployment_approval_request.arn
-    maxReceiveCount        = 5
-    maxReceiveCountPerQueue = 5
-  })
-
-  kms_master_key_id = "alias/aws/sqs"
-  kms_data_key_reuse_period_seconds = 300
+  receive_wait_time_seconds = 1
+  tags = {
+    Environment = "production"
+  }
 }
 ##########Cognito user pool client pool##############
 
@@ -169,7 +161,8 @@ resource "aws_cognito_user_pool_client" "test_app_user_pool_client" {
   name                   = "${var.environment}_test_client"
   generate_secret        = false
   user_pool_id           = aws_cognito_user_pool.test_app_user_pool.id
-  allowed_oauth_flows_user_pool_client = true
+
+  callback_urls = ["https://web.tradelinx.onlnie/callback"]
   explicit_auth_flows    = [
     "ALLOW_ADMIN_USER_PASSWORD_AUTH",
     "ALLOW_CUSTOM_AUTH",
@@ -186,114 +179,4 @@ resource "aws_cognito_user_pool_client" "test_app_user_pool_client" {
     refresh_token = "days"
   }
   prevent_user_existence_errors = "ENABLED"
-}
-
-
-
-##########Cognito Identity$$$$$$$$$$
-resource "aws_cognito_identity_pool" "global_identity_pool" {
-  identity_pool_name             = "${var.environment}_swipbox_identity_clone"
-  allow_classic_flow             = false
-  allow_unauthenticated_identities = true
-
-  cognito_identity_providers {
-      client_id     = aws_cognito_user_pool_client.test_app_user_pool_client.id
-      provider_name = aws_cognito_user_pool.test_app_user_pool.endpoint
-    }
-}
-
-resource "aws_cognito_identity_pool_roles_attachment" "identity_pool_role_attachment" {
-  identity_pool_id = aws_cognito_identity_pool.global_identity_pool.id
-
-  roles = {
-    authenticated   = aws_iam_role.authenticated_role.arn
-    unauthenticated = aws_iam_role.unauthenticated_role.arn
-  }
-}
-
-resource "aws_iam_role" "authenticated_role" {
-  name = "AuthenticatedRole"
-
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17",
-    Statement = [
-      {
-        Effect = "Allow",
-        Principal = {
-          Federated = "cognito-identity.amazonaws.com"
-        },
-        Action = "sts:AssumeRoleWithWebIdentity",
-        Condition = {
-          StringEquals = {
-            "cognito-identity.amazonaws.com:aud" = aws_cognito_identity_pool.global_identity_pool.id
-          }
-        }
-      }
-    ]
-  })
-
-  inline_policy {
-    name = "Cognito-AuthenticatedPolicy"
-    policy = jsonencode({
-      Version = "2012-10-17",
-      Statement = [
-        {
-          Effect = "Allow",
-          Action = [
-            "cognito-identity:GetCredentialsForIdentity",
-            "mobileanalytics:PutEvents",
-            "cognito-sync:*",
-            "cognito-identity:*",
-            "s3:ListBucket",
-            "s3:GetObject",
-            "s3:PutObject",
-            "s3-object-lambda:*",
-          ],
-          Resource = ["*"]
-        }
-      ]
-    })
-  }
-}
-
-resource "aws_iam_role" "unauthenticated_role" {
-  name = "UnauthenticatedRole"
-
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17",
-    Statement = [
-      {
-        Effect = "Allow",
-        Principal = {
-          Federated = "cognito-identity.amazonaws.com"
-        },
-        Action = "sts:AssumeRoleWithWebIdentity",
-        Condition = {
-          StringEquals = {
-            "cognito-identity.amazonaws.com:aud" = aws_cognito_identity_pool.global_identity_pool.id
-          }
-        }
-      }
-    ]
-  })
-
-  inline_policy {
-    name = "Cognito-UnauthenticatedPolicy"
-    policy = jsonencode({
-      Version = "2012-10-17",
-      Statement = [
-        {
-          Effect = "Allow",
-          Action = [
-            "cognito-identity:GetCredentialsForIdentity",
-            "mobileanalytics:PutEvents",
-            "cognito-sync:*",
-            "cognito-identity:*",
-            "s3:ListBucket",
-          ],
-          Resource = ["*"]
-        }
-      ]
-    })
-  }
 }
